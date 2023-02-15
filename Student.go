@@ -38,12 +38,6 @@ func main() {
 
 	file.Close()
 
-	// and then a loop iterates through
-	// and prints each of the slice values.
-	//for _, each_ln := range text {
-	//	fmt.Println(each_ln)
-	//}
-
 	num, err := strconv.Atoi(text[0]) // so dong trong file text
 	//fmt.Printf("NUM LA: %v\n", num)
 	if err != nil {
@@ -51,7 +45,9 @@ func main() {
 		panic(err)
 	}
 
-	school := make([]Student, 0, num-1) // tong hop danh sach hoc sinh trong truong
+	school := make([]Student, 0, num-1)    // tong hop danh sach hoc sinh trong truong
+	classScore := make(map[string]float64) // day la map chua lop va tong diem lop do
+	scoreEach := make(map[string]float64)  // day la map chua ten lop va sinh vien co diem cao nhat lop
 
 	for i := 1; i < num; i++ {
 		var tmp []string // slice
@@ -70,47 +66,32 @@ func main() {
 			note:  noteTmp,
 		}
 		school = append(school, StudentTmp)
-		//fmt.Println(StudentTmp)
+
+		scoreEach[StudentTmp.class] = findThreeHighestStudents(StudentTmp.score, scoreEach[StudentTmp.class])
+		classScore[StudentTmp.class] += scoreTmp // tinh tong diem cac lop
+
 	}
 
-	//fmt.Println(school)
-	rs := map[string]float64{}
-
-	var first, second, third float64 = 0.0, 0.0, 0.0
 	var classFirst, classSecond, classThird string
-
-	for i := 0; i < len(school); i++ {
-		rs[school[i].class] += school[i].score
-		//fmt.Printf("\nday la school[i]class %v va school[i]score %v \n", school[i].class, school[i].score)
-	}
-
-	for i, num := range rs {
-		//fmt.Printf("\nday la class %v va NUM %v + %v\n", i, rs[i], num)
-		rs[i] += num
-	}
-
-	classFirst, classSecond, classThird = threeHighestScore(rs, first, second, third)
+	classFirst, classSecond, classThird = threeHighestClasses(classScore)
 	fmt.Printf("\nThe three highest classes are: %v, %v, %v \n", classFirst, classSecond, classThird)
 
 	var firstStudent, secondStudent, thirdStudent float64
-	firstStudent = findThreeHighestStudents(school, classFirst)
-	secondStudent = findThreeHighestStudents(school, classSecond)
-	thirdStudent = findThreeHighestStudents(school, classThird)
+	firstStudent, secondStudent, thirdStudent = threeHighestScores(scoreEach)
 	fmt.Printf("\nThe three highest scores of the top 3 classes are:\n%v: %v\n%v: %v\n%v: %v\n", classFirst, firstStudent, classSecond, secondStudent, classThird, thirdStudent)
 }
 
-func findThreeHighestStudents(school []Student, check string) float64 {
-	tmp := 0.0
-	for i := 0; i < len(school); i++ {
-		if school[i].class == check && school[i].score >= tmp {
-			tmp = school[i].score
-		}
+func findThreeHighestStudents(newScore float64, oldScore float64) float64 {
+	if newScore > oldScore {
+		return newScore
+	} else {
+		return oldScore
 	}
-	return tmp
 }
 
-func threeHighestScore(numbers map[string]float64, first float64, second float64, third float64) (string, string, string) {
+func threeHighestClasses(numbers map[string]float64) (string, string, string) {
 	var classFirst, classSecond, classThird string
+	first, third, second := 0.0, 0.0, 0.0
 	for i, _ := range numbers {
 		if numbers[i] > first {
 			third = second
@@ -130,4 +111,19 @@ func threeHighestScore(numbers map[string]float64, first float64, second float64
 		}
 	}
 	return classFirst, classSecond, classThird
+}
+
+func threeHighestScores(numbers map[string]float64) (float64, float64, float64) {
+	first, third, second := 0.0, 0.0, 0.0
+	for i, _ := range numbers {
+		if numbers[i] > first {
+			third = second
+			second = first
+			first = numbers[i]
+		} else if numbers[i] > third && numbers[i] != second {
+			third = second
+			second = numbers[i]
+		}
+	}
+	return first, second, third
 }
